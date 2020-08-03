@@ -18,7 +18,7 @@ $(window).ready(function(){
     const cells = new Array()
 
     let mainLoop;
-    let filledNumbers = 0;
+    let filledNumbers = 1;
 
     let iterations = 0;
 
@@ -28,7 +28,6 @@ $(window).ready(function(){
     }
 
     resetFilledButton.on('click', function(){
-        console.log(cells)
         for(let cell of cells){
             if(!cell.constNumber) cell.removeNumber();
         }
@@ -36,7 +35,12 @@ $(window).ready(function(){
 
     calculateSudokuButton.on('click', function(){
         while(checkEnd()){
-            solve();
+            solve()
+            if(filledNumbers === 0){
+                console.log('nie udało się wpisać żadnej cyfry');
+                break;
+            }
+            filledNumbers = 0;
         }
     })
 
@@ -143,7 +147,11 @@ $(window).ready(function(){
             case 's':
             case 'S':
                 solve()
+                if(filledNumbers === 0)
+                    console.log('nie udało się wpisać żadnej cyfry');
+                filledNumbers = 0;
                 break;
+
             case '1':
             case '2':
             case '3':
@@ -155,12 +163,14 @@ $(window).ready(function(){
             case '9':
                 addNumber(key);
                 break;
+
             case 'ArrowDown':
             case 'ArrowUp':
             case 'ArrowLeft':
             case 'ArrowRight':
                 moveCursor(key);
                 break;
+
             case 'Backspace':
                 removeNumber();
                 break;
@@ -253,16 +263,11 @@ $(window).ready(function(){
         for(let i=0; i<9; i++)
             boxReverseCheck(i);
         
-        if(filledNumbers === 0)
-            console.log('nie udało się wpisać żadnej cyfry');
-        
         if(! checkEnd()){
             console.log('iterations: '+ iterations)
             iterations = 0;
             clearInterval(mainLoop);
         }
-
-        filledNumbers = 0;
     }
     
     fillByGrid(grid);
