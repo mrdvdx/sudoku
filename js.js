@@ -12,7 +12,35 @@ $(window).ready(function(){
     const htmlCell = "<div class='cell'></div>"
     const htmlBox = "<div class='box'></div>"
     const DOMgrid = $(".grid")
+    const resetGridButton = $('.resetGrid')
+    const calculateSudokuButton = $('.calculateSudoku')
     const cells = new Array()
+
+    let mainLoop;
+    let filledNumbers = 0;
+
+    let iterations = 0;
+
+    function generateInput(id){
+        const value = grid[Math.floor(id/9)][Math.floor(id % 9)] !== 0 ? grid[Math.floor(id/9)][Math.floor(id % 9)] : '';
+        return `<div class='input-item' id='input-${id}'>${value}</div>`;
+    }
+
+    calculateSudokuButton.on('click', function(){
+        while(checkEnd()){
+            solve();
+        }
+    })
+
+    resetGridButton.on('click', function(){
+        for(let i=0; i<81; i++){
+            cells[i].number = 0;
+            cells[i].isActive = true;
+
+            $(`#input-${i}`).text('')
+            $(`#${i}`).text('')
+        }
+    })
 
     for(let i=0; i<9; i++)
         DOMgrid.append(htmlBox)
@@ -32,7 +60,7 @@ $(window).ready(function(){
 
             $(this).addClass(`cell-${cellIndex}`).addClass(`row-${row}`).addClass(`col-${col}`).attr('id', id)
         })
-    }) 
+    })
 
     function fillCellByBox(box, cell, number){
         const cellToFill = $(`.box-${box}`).find(`.cell-${cell}`);
@@ -59,7 +87,8 @@ $(window).ready(function(){
                 if(number != 0)
                     fillCellByCoords(colNumber, rowNumber, number)
                 
-                cells.push(new Cell(rowNumber, colNumber, number))
+                const active = number === 0 ? true : false;
+                cells.push(new Cell(rowNumber, colNumber, number, active))
                 colNumber++;
             })
             rowNumber++;
@@ -81,13 +110,28 @@ $(window).ready(function(){
 
             case 's':
             case 'S':
-                solve();
+                solve()
                 break;
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+                addNumber(key);
         }   
         
     })
 
-    function checkEnd(cells){
+    function addNumber(key){
+        const index = $('.clicked2').attr('id')
+        cells[index].fillConstNumber(parseInt(key));
+    }
+
+    function checkEnd(){
         return !cells.every(cell => cell.number !== 0)
     }
 
@@ -98,59 +142,87 @@ $(window).ready(function(){
         
         if(foundArray.filter(el => el).length === 1){
             const number = foundArray.indexOf(true)
+            filledNumbers++;
             cells[i].fillNumber(number)
+            // console.log(`NUMBER FILLING ::: filling box - ${cells[i].box}, cell - ${cells[i].cell} with number - ${number}`)
         }
+    }
+
+    function resetActive(){
+        for(let cell of cells){
+            if(cell.number === 0) cell.setActive()
+        }
+    }
+
+    function fillBox(number){
+        const boxes = new Array();
+
+        for(let box=0; box<9; box++){
+            const cellsInBox = new Array();
+            for(let cell of cells)
+                if(cell.box === box) cellsInBox.push({...cell})
+            
+            boxes.push(cellsInBox);
+        }
+
+        for(let box of boxes){
+            const foundArray = new Array();
+            for(let cell of box){
+                if(cell.isActive) foundArray.push({...cell})
+            }
+
+            if(foundArray.length === 1){
+                filledNumbers++;
+                cells.find(cell => foundArray[0].row === cell.row && foundArray[0].col === cell.col).fillNumber(number)
+                // console.log(`BOX FILLING ::: filling box - ${foundArray[0].box}, cell - ${foundArray[0].cell} with number - ${number}`)
+            }
+        }
+
     }
 
     function boxReverseCheck(i){
-        const numberCells = new Array();
-        for(let j=0; j<cells.length; j++){
-            const {row, col, box, cell, number} = cells[j]
-            if(number === (i + 1)){
-                numberCells.push({
-                    row,
-                    col,
-                    box,
-                    cell,
-                    number
-                });
+        const filteredCells = cells.filter(cell => cell.number === i + 1)
+        for(let filteredCell of filteredCells){
+            for(let cell of cells){
+                if(cell.box === filteredCell.box || cell.row === filteredCell.row || cell.col === filteredCell.col){
+                    cell.setUnActive();
+                }
             }
         }
 
-        for(let j=0; j<1; j++){
-            const filteredCells = cells.filter(cell => cell.number === i + 1)
-            // for(let cell of filteredCells){
-            //     if(cell.box === this.box || cell.row === row || cell.col === coll)
-            //         cell.setUnActive()
-            // }
-            console.log(filteredCells)
-        }
-
+        fillBox(i + 1)
+        resetActive();
+    
     }
 
     function solve(){
-        let iterations = 0;
-        while(iterations < 1){
-            iterations++
-            for(let i=0; i<80; i++){
-                if(cells[i].number === 0)
-                    console.log('')
-                    //numberCheck(i);
+        iterations++
+        for(let i=0; i<80; i++){
+            if(cells[i].number === 0){
+                numberCheck(i);
             }
-
-            for(let i=0; i<1; i++)
-                boxReverseCheck(i);
-            
         }
 
-        console.log('iterations: '+ iterations)
+        for(let i=0; i<9; i++)
+            boxReverseCheck(i);
+        
+        if(filledNumbers === 0)
+            console.log('nie udało się wpisać żadnej cyfry');
+        
+        if(! checkEnd()){
+            console.log('iterations: '+ iterations)
+            iterations = 0;
+            clearInterval(mainLoop);
+        }
+
+        filledNumbers = 0;
     }
     
     fillByGrid(grid);
 })
 
 class Cell{
-    constructor(row, col, number){
+    constructor(row, col, number, active){
         this.row = row,
         this.col = col,
         this.number = number
@@ -163,12 +235,16 @@ class Cell{
         this.box = this.boxRow * 3 + this.boxCol
         this.cell = this.cellRow * 3 + this.cellCol
 
-        this.isActive = true;
+        this.isActive = active;
     };
 
     setUnActive(){
         this.isActive = false;
     };
+
+    setActive(){
+        this.isActive = true;
+    }
 
     unHighlight(){
         $(".cell").removeClass('clicked')
@@ -200,4 +276,10 @@ class Cell{
         this.number = number
         $(`.box-${this.box} .cell-${this.cell}`).text(number).css('color', 'red')
     };
+
+    fillConstNumber(number){
+        this.number = number
+        this.isActive = false;
+        $(`.box-${this.box} .cell-${this.cell}`).text(number)
+    }
 }

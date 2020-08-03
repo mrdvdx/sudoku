@@ -10,10 +10,10 @@
 }
 
 .grid{
+    margin: 50px auto;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    margin: 20px auto;
 
     width: var(--grid-dim);
     height: var(--grid-dim);
@@ -85,4 +85,38 @@
     border-top: 1px solid black;
 
     height: calc(var(--cell-dim) - 1px);
+}
+
+.leftPart{
+    position: absolute;
+}
+
+.button{
+    position: absolute;
+    display: block;
+    cursor: pointer;
+    padding: 5px 40px;
+    border: 3px solid #303030;
+    background: #454545;
+    color: white;
+    font-weight: 500;
+    border-radius: 10px;
+}
+
+.calculateSudoku{
+    left: 70px;
+    top: 100px;
+}
+
+.resetGrid{
+    left: 70px;
+    top: 200px;
+}
+
+.button:hover{
+    background: #565656;
+}
+
+.checked{
+    background: #cdcdcd;
 }
