@@ -103,6 +103,10 @@
     border-radius: 10px;
 }
 
+.red{
+    color: red;
+}
+
 .calculateSudoku{
     left: 70px;
     top: 100px;
@@ -111,6 +115,11 @@
 .resetGrid{
     left: 70px;
     top: 200px;
+}
+
+.resetFilled{
+    left: 70px;
+    top: 300px;
 }
 
 .button:hover{

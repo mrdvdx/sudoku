@@ -13,6 +13,7 @@ $(window).ready(function(){
     const htmlBox = "<div class='box'></div>"
     const DOMgrid = $(".grid")
     const resetGridButton = $('.resetGrid')
+    const resetFilledButton = $('.resetFilled')
     const calculateSudokuButton = $('.calculateSudoku')
     const cells = new Array()
 
@@ -25,6 +26,13 @@ $(window).ready(function(){
         const value = grid[Math.floor(id/9)][Math.floor(id % 9)] !== 0 ? grid[Math.floor(id/9)][Math.floor(id % 9)] : '';
         return `<div class='input-item' id='input-${id}'>${value}</div>`;
     }
+
+    resetFilledButton.on('click', function(){
+        console.log(cells)
+        for(let cell of cells){
+            if(!cell.constNumber) cell.removeNumber();
+        }
+    })
 
     calculateSudokuButton.on('click', function(){
         while(checkEnd()){
@@ -88,7 +96,8 @@ $(window).ready(function(){
                     fillCellByCoords(colNumber, rowNumber, number)
                 
                 const active = number === 0 ? true : false;
-                cells.push(new Cell(rowNumber, colNumber, number, active))
+                const constant = number === 0 ? false : true;
+                cells.push(new Cell(rowNumber, colNumber, number, active, constant))
                 colNumber++;
             })
             rowNumber++;
@@ -101,7 +110,30 @@ $(window).ready(function(){
         cells[id].highlight(true)
     })
 
+    function moveCursor(key){
+        let moveVectorValue;
+        switch(key){
+            case 'ArrowDown':
+                moveVectorValue = 9;
+                break;
+            case 'ArrowUp':
+                moveVectorValue = -9;
+                break;
+            case 'ArrowLeft':
+                moveVectorValue = -1;
+                break;
+            case 'ArrowRight':
+                moveVectorValue = 1;
+                break;
+        }
+
+        const id = parseInt($('.clicked2').attr('id'))
+        const newId = (id + moveVectorValue > 80 || id + moveVectorValue < 0) ? id : id + moveVectorValue
+        cells[newId].highlight(true);
+    }
+
     $(window).on('keydown', function({key}){
+        // console.log(key);
         switch(key){
             case 'c':
             case 'C':
@@ -122,9 +154,24 @@ $(window).ready(function(){
             case '8':
             case '9':
                 addNumber(key);
+                break;
+            case 'ArrowDown':
+            case 'ArrowUp':
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                moveCursor(key);
+                break;
+            case 'Backspace':
+                removeNumber();
+                break;
         }   
         
     })
+
+    function removeNumber(){
+        const id = $('.clicked2').attr('id')
+        cells[id].removeNumber();
+    }
 
     function addNumber(key){
         const index = $('.clicked2').attr('id')
@@ -222,7 +269,7 @@ $(window).ready(function(){
 })
 
 class Cell{
-    constructor(row, col, number, active){
+    constructor(row, col, number, active, constant){
         this.row = row,
         this.col = col,
         this.number = number
@@ -236,7 +283,14 @@ class Cell{
         this.cell = this.cellRow * 3 + this.cellCol
 
         this.isActive = active;
+        this.constNumber = constant
     };
+
+    removeNumber(){
+        this.isActive = true;
+        this.number = 0;
+        $(`.box-${this.box} .cell-${this.cell}`).text('').removeClass('red')
+    }
 
     setUnActive(){
         this.isActive = false;
@@ -274,12 +328,13 @@ class Cell{
 
     fillNumber(number){
         this.number = number
-        $(`.box-${this.box} .cell-${this.cell}`).text(number).css('color', 'red')
+        $(`.box-${this.box} .cell-${this.cell}`).text(number).addClass('red')
     };
 
     fillConstNumber(number){
         this.number = number
         this.isActive = false;
+        this.constNumber = true;
         $(`.box-${this.box} .cell-${this.cell}`).text(number)
     }
 }
